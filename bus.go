@@ -2,6 +2,7 @@ package bus
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -42,6 +43,14 @@ func (pub *Publisher) Publish(ctx context.Context, msg []byte) error {
 		return fmt.Errorf("kgo had a produce error: %w", err)
 	}
 	return nil
+}
+
+func (pub *Publisher) PublishJSON(ctx context.Context, msg any) error {
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("json.Marshal: %w", err)
+	}
+	return pub.Publish(ctx, bytes)
 }
 
 func (pub *Publisher) Close() {
@@ -103,4 +112,21 @@ func (consumer *Consumer) each(ctx context.Context, f func(msg []byte)) {
 			f(record.Value)
 		}
 	}
+}
+
+func NewConsumerJSON[T any](
+	ctx context.Context,
+	brokers []string,
+	topic string,
+	f func(msg T),
+) (*Consumer, error) {
+	return NewConsumer(ctx, brokers, topic, func(msg []byte) {
+		var parsed T
+		err := json.Unmarshal(msg, &parsed)
+		if err != nil {
+			fmt.Printf("[bus] cannot parse message: \"%s\" as %T: %v\n", msg, parsed, err)
+			return
+		}
+		f(parsed)
+	})
 }

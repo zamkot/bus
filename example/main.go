@@ -12,6 +12,11 @@ var (
 	topic   = "interesting-stuff"
 )
 
+type CoolMessage struct {
+	Text   string `json:"text"`
+	Number int    `json:"number"`
+}
+
 func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -32,23 +37,29 @@ func main() {
 
 	time.Sleep(100 * time.Millisecond)
 
-	c2, err := bus.NewConsumer(ctx, brokers, topic, func(msg []byte) {
-		fmt.Printf("c2: %s\n", msg)
+	cJSON, err := bus.NewConsumerJSON(ctx, brokers, topic, func(msg CoolMessage) {
+		fmt.Printf("cJSON: got text=\"%s\" and number=%d\n", msg.Text, msg.Number)
 	})
-	assertNoErr("create c2", err)
+	assertNoErr("create cJSON", err)
 
 	time.Sleep(100 * time.Millisecond)
 
 	err = pub.Publish(ctx, []byte("two"))
 	assertNoErr("publish two", err)
 
+	err = pub.PublishJSON(ctx, CoolMessage{
+		Text:   "hello",
+		Number: 600,
+	})
+	assertNoErr("publish json", err)
+
 	time.Sleep(100 * time.Millisecond)
 
 	cancel()
 	<-c1.Done
 	fmt.Printf("c1 exited with reason: %v\n", c1.Error)
-	<-c2.Done
-	fmt.Printf("c2 exited with reason: %v\n", c2.Error)
+	<-cJSON.Done
+	fmt.Printf("cJSON exited with reason: %v\n", cJSON.Error)
 }
 
 func assertNoErr(where string, err error) {
