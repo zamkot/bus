@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/zamkot/bus"
 	"time"
+
+	"github.com/zamkot/bus"
 )
 
 var (

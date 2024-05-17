@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/twmb/franz-go/pkg/kgo"
 	"sync"
+
+	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 type Publisher struct {
