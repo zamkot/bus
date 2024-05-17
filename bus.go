@@ -63,7 +63,7 @@ type Consumer struct {
 	Error error
 }
 
-func NewConsumer(
+func Consume(
 	ctx context.Context,
 	brokers []string,
 	topic string,
@@ -114,13 +114,13 @@ func (consumer *Consumer) each(ctx context.Context, f func(msg []byte)) {
 	}
 }
 
-func NewConsumerJSON[T any](
+func ConsumeJSON[T any](
 	ctx context.Context,
 	brokers []string,
 	topic string,
 	f func(msg T),
 ) (*Consumer, error) {
-	return NewConsumer(ctx, brokers, topic, func(msg []byte) {
+	return Consume(ctx, brokers, topic, func(msg []byte) {
 		var parsed T
 		err := json.Unmarshal(msg, &parsed)
 		if err != nil {

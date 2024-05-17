@@ -32,13 +32,13 @@ func main() {
 	assertNoErr("publish one", err)
 
 	// Any message produced from now one will trigger this callback
-	c1, err := bus.NewConsumer(ctx, brokers, topic, func(msg []byte) {
+	c1, err := bus.Consume(ctx, brokers, topic, func(msg []byte) {
 		fmt.Printf("c1: %s\n", msg)
 	})
 	assertNoErr("create c1", err)
 
 	// We can also defer parsing JSON to the consumer
-	cJSON, err := bus.NewConsumerJSON(ctx, brokers, topic, func(msg CoolMessage) {
+	cJSON, err := bus.ConsumeJSON(ctx, brokers, topic, func(msg CoolMessage) {
 		fmt.Printf("cJSON: got text=\"%s\" and number=%d\n", msg.Text, msg.Number)
 	})
 	assertNoErr("create cJSON", err)
