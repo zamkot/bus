@@ -27,16 +27,17 @@ func main() {
 	}
 	defer pub.Close()
 
+	// There is no one listening - this message goes into nothingness
+	err = pub.Publish(ctx, []byte("one"))
+	assertNoErr("publish one", err)
+
+	// Any message produced from now one will trigger this callback
 	c1, err := bus.NewConsumer(ctx, brokers, topic, func(msg []byte) {
 		fmt.Printf("c1: %s\n", msg)
 	})
 	assertNoErr("create c1", err)
 
-	err = pub.Publish(ctx, []byte("one"))
-	assertNoErr("publish one", err)
-
-	time.Sleep(100 * time.Millisecond)
-
+	// We can also defer parsing JSON to the consumer
 	cJSON, err := bus.NewConsumerJSON(ctx, brokers, topic, func(msg CoolMessage) {
 		fmt.Printf("cJSON: got text=\"%s\" and number=%d\n", msg.Text, msg.Number)
 	})
@@ -44,9 +45,12 @@ func main() {
 
 	time.Sleep(100 * time.Millisecond)
 
+	// This message will be seen by the active consumers
+	// The JSON guy won't be happy though
 	err = pub.Publish(ctx, []byte("two"))
 	assertNoErr("publish two", err)
 
+	// And finally a well-formed JSON message
 	err = pub.PublishJSON(ctx, CoolMessage{
 		Text:   "hello",
 		Number: 600,
@@ -54,8 +58,8 @@ func main() {
 	assertNoErr("publish json", err)
 
 	time.Sleep(100 * time.Millisecond)
-
 	cancel()
+
 	<-c1.Done
 	fmt.Printf("c1 exited with reason: %v\n", c1.Error)
 	<-cJSON.Done
