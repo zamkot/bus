@@ -32,7 +32,7 @@ func main() {
 	err = pub.Produce(ctx, []byte("one"))
 	assertNoErr("produce one", err)
 
-	// Any message produced from now one will trigger this callback
+	// Any message produced from now on will trigger this callback
 	c1, err := bus.Consume(ctx, brokers, topic, func(msg []byte) {
 		fmt.Printf("c1: %s\n", msg)
 	})
