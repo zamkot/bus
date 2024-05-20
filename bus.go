@@ -10,26 +10,26 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-type Publisher struct {
+type Producer struct {
 	kcl   *kgo.Client
 	topic string
 }
 
-func NewPublisher(brokers []string, topic string) (*Publisher, error) {
+func NewProducer(brokers []string, topic string) (*Producer, error) {
 	kcl, err := kgo.NewClient(
 		kgo.SeedBrokers(brokers...),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("kgo.NewClient: %w", err)
 	}
-	pub := &Publisher{
+	pub := &Producer{
 		kcl:   kcl,
 		topic: topic,
 	}
 	return pub, nil
 }
 
-func (pub *Publisher) Publish(ctx context.Context, msg []byte) error {
+func (pub *Producer) Produce(ctx context.Context, msg []byte) error {
 	var err error
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -46,15 +46,15 @@ func (pub *Publisher) Publish(ctx context.Context, msg []byte) error {
 	return nil
 }
 
-func (pub *Publisher) PublishJSON(ctx context.Context, msg any) error {
+func (pub *Producer) ProduceJSON(ctx context.Context, msg any) error {
 	bytes, err := json.Marshal(msg)
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
-	return pub.Publish(ctx, bytes)
+	return pub.Produce(ctx, bytes)
 }
 
-func (pub *Publisher) Close() {
+func (pub *Producer) Close() {
 	pub.kcl.Close()
 }
 

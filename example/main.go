@@ -22,15 +22,15 @@ func main() {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(context.Background())
 
-	pub, err := bus.NewPublisher(brokers, topic)
+	pub, err := bus.NewProducer(brokers, topic)
 	if err != nil {
 		panic(fmt.Errorf("new client pub: %w", err))
 	}
 	defer pub.Close()
 
 	// There is no one listening - this message goes into nothingness
-	err = pub.Publish(ctx, []byte("one"))
-	assertNoErr("publish one", err)
+	err = pub.Produce(ctx, []byte("one"))
+	assertNoErr("produce one", err)
 
 	// Any message produced from now one will trigger this callback
 	c1, err := bus.Consume(ctx, brokers, topic, func(msg []byte) {
@@ -59,15 +59,15 @@ func main() {
 
 	// This message will be seen by the active consumers
 	// The JSON guys won't be happy about the format though
-	err = pub.Publish(ctx, []byte("two"))
-	assertNoErr("publish two", err)
+	err = pub.Produce(ctx, []byte("two"))
+	assertNoErr("produce two", err)
 
 	// And finally a well-formed JSON message
-	err = pub.PublishJSON(ctx, CoolMessage{
+	err = pub.ProduceJSON(ctx, CoolMessage{
 		Text:   "hello",
 		Number: 600,
 	})
-	assertNoErr("publish json", err)
+	assertNoErr("produce json", err)
 
 	time.Sleep(100 * time.Millisecond)
 	cancel()
