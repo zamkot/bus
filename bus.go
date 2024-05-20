@@ -15,6 +15,8 @@ type Producer struct {
 	topic string
 }
 
+// NewProducer creates a client that is connected to the kafka cluster
+// and ready to produce messages.
 func NewProducer(brokers []string, topic string) (*Producer, error) {
 	kcl, err := kgo.NewClient(
 		kgo.SeedBrokers(brokers...),
@@ -29,6 +31,7 @@ func NewProducer(brokers []string, topic string) (*Producer, error) {
 	return pub, nil
 }
 
+// Produce produces to kafka synchronously.
 func (pub *Producer) Produce(ctx context.Context, msg []byte) error {
 	var err error
 	var wg sync.WaitGroup
@@ -46,6 +49,8 @@ func (pub *Producer) Produce(ctx context.Context, msg []byte) error {
 	return nil
 }
 
+// ProduceJSON takes a message of any JSON-serializable type and produces
+// to kafka synchronously.
 func (pub *Producer) ProduceJSON(ctx context.Context, msg any) error {
 	bytes, err := json.Marshal(msg)
 	if err != nil {
@@ -54,6 +59,7 @@ func (pub *Producer) ProduceJSON(ctx context.Context, msg any) error {
 	return pub.Produce(ctx, bytes)
 }
 
+// Close closes the connection to kafka.
 func (pub *Producer) Close() {
 	pub.kcl.Close()
 }
@@ -64,6 +70,7 @@ type Consumer struct {
 	Error error
 }
 
+// Consume calls the function f on each message on the topic.
 func Consume(
 	ctx context.Context,
 	brokers []string,
@@ -115,6 +122,8 @@ func (consumer *Consumer) each(ctx context.Context, f func(msg []byte)) {
 	}
 }
 
+// ConsumeJSON deserializes each message on the topic into T and calls
+// the function f on it.
 func ConsumeJSON[T any](
 	ctx context.Context,
 	brokers []string,
@@ -132,6 +141,9 @@ func ConsumeJSON[T any](
 	})
 }
 
+// ConsumeChanJSON deserializes each message on the topic into T and sends it
+// to channel c. The channel is closed once the consuming is over i.e.
+// context is cancelled or kafka fetch experiences an error.
 func ConsumeChanJSON[T any](
 	ctx context.Context,
 	brokers []string,
