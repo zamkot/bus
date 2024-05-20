@@ -131,3 +131,22 @@ func ConsumeJSON[T any](
 		f(parsed)
 	})
 }
+
+func ConsumeChanJSON[T any](
+	ctx context.Context,
+	brokers []string,
+	topic string,
+	c chan T,
+) (*Consumer, error) {
+	consumer, err := ConsumeJSON(ctx, brokers, topic, func(msg T) {
+		c <- msg
+	})
+	if err != nil {
+		return nil, fmt.Errorf("from ConsumeJSON: %w", err)
+	}
+	go func() {
+		<-consumer.Done
+		close(c)
+	}()
+	return consumer, nil
+}

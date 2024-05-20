@@ -38,16 +38,27 @@ func main() {
 	})
 	assertNoErr("create c1", err)
 
-	// We can also defer parsing JSON to the consumer
+	// Bus can also deserialize messages into our own custom type
 	cJSON, err := bus.ConsumeJSON(ctx, brokers, topic, func(msg CoolMessage) {
 		fmt.Printf("cJSON: got text=\"%s\" and number=%d\n", msg.Text, msg.Number)
 	})
 	assertNoErr("create cJSON", err)
 
+	// Here's another convenience method for a channel based API
+	coolMsgChan := make(chan CoolMessage)
+	cChanJSON, err := bus.ConsumeChanJSON(ctx, brokers, topic, coolMsgChan)
+	assertNoErr("create cJSON", err)
+	go func() {
+		for msg := range coolMsgChan {
+			fmt.Printf("cChanJSON: got text=\"%s\" and number=%d\n", msg.Text, msg.Number)
+		}
+		fmt.Println("cChanJSON closed the channel")
+	}()
+
 	time.Sleep(100 * time.Millisecond)
 
 	// This message will be seen by the active consumers
-	// The JSON guy won't be happy though
+	// The JSON guys won't be happy about the format though
 	err = pub.Publish(ctx, []byte("two"))
 	assertNoErr("publish two", err)
 
@@ -65,6 +76,8 @@ func main() {
 	fmt.Printf("c1 exited with reason: %v\n", c1.Error)
 	<-cJSON.Done
 	fmt.Printf("cJSON exited with reason: %v\n", cJSON.Error)
+	<-cChanJSON.Done
+	fmt.Printf("cChanJSON exited with reason: %v\n", cChanJSON.Error)
 }
 
 func assertNoErr(where string, err error) {
